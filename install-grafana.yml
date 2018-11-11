@@ -1,0 +1,28 @@
+- hosts: grafana-nodes
+  become: yes
+  vars:
+    branch: stable
+  tasks:
+    - name: "Add grafana yum repositories"
+      template:
+        src: ./templates/grafana.repo
+        dest: /etc/yum.repos.d/grafana.repo
+    - name: "Install grafana"
+      yum:
+        name: grafana
+        state: latest
+    - name: "Start grafana service"
+      service:
+        name: grafana-server
+        state: started
+    - name: "Redirect port 80 to 3000 in iptables"
+      iptables:
+        table: nat
+        chain: PREROUTING
+        in_interface: eth0
+        protocol: tcp
+        match: tcp
+        destination_port: 80
+        jump: REDIRECT
+        to_ports: 3000
+        comment: Reditect port 80 to grafana on port 3000
